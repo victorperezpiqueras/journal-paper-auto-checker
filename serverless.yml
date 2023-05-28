@@ -5,17 +5,17 @@ package:
   exclude:
     - ./**
   include:
-    - ./paper-checker.py
+    - ./src/**
 
 provider:
   name: aws
   runtime: python3.10
   region: eu-west-1
   environment:
-    SNS_TOPIC_ARN: !Ref SNSTopic
-    EMAIL_ADDRESS: ${file(./env.yml):ENV_VARS.EMAIL_ADDRESS}
-    PASSWORD: ${file(./env.yml):ENV_VARS.PASSWORD}
     JOURNAL_URL: ${file(./env.yml):ENV_VARS.JOURNAL_URL}
+    USERNAME: ${file(./env.yml):ENV_VARS.USERNAME}
+    PASSWORD: ${file(./env.yml):ENV_VARS.PASSWORD}
+    EMAIL_ADDRESSES: ${file(./env.yml):ENV_VARS.EMAIL_ADDRESSES}
 
 custom:
   pythonRequirements:
@@ -24,17 +24,7 @@ custom:
 
 functions:
   cron-checker:
-    handler: paper-checker.lambda_handler
+    handler: src/cron_checker.handler
     memorySize: 128
     events:
       - schedule: rate(1 day)
-
-resources:
-  Resources:
-    SNSTopic:
-      Type: AWS::SNS::Topic
-      Properties:
-        TopicName: ${self:service}-publish-update-topic
-        Subscription:
-          - Endpoint: ${self:provider.environment.EMAIL_ADDRESS}
-            Protocol: email
