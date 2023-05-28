@@ -1,5 +1,9 @@
+from selenium.webdriver.support.wait import WebDriverWait
+
 from src.paper_status import PaperStatus
 from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
 
 
 def scrap(journal_url: str, username: str, password: str) -> PaperStatus:
@@ -17,26 +21,43 @@ def scrap(journal_url: str, username: str, password: str) -> PaperStatus:
 
     # open chrome and go to website
     driver = webdriver.Chrome()
+    WAITING_SECONDS = 10
+    wait = WebDriverWait(driver, WAITING_SECONDS)
+
     driver.get(journal_url)
 
+    # switch to content iframe
+    content_frame = wait.until(EC.visibility_of_element_located((By.ID, "content")))
+    driver.switch_to.frame(content_frame)
+
+    # switch to content iframe
+    login_frame = wait.until(EC.visibility_of_element_located((By.TAG_NAME, "iframe")))
+    driver.switch_to.frame(login_frame)
+
     # fill in username and password
-    username_input = driver.find_element_by_id("username")
+    username_input = driver.find_element(By.ID, "username")
     username_input.send_keys(username)
-    password_input = driver.find_element_by_id("password")
+    password_input = driver.find_element(By.ID, "passwordTextbox")
     password_input.send_keys(password)
 
     # click login button by name
-    login_button = driver.find_element_by_name("authorLogin")
+    login_button = driver.find_element(By.NAME, "authorLogin")
     login_button.click()
 
     # wait for page to load
-    driver.implicitly_wait(10)
+    driver.implicitly_wait(WAITING_SECONDS)
+
+    # switch to content iframe
+
+    for i in range(2):
+        content_frame = wait.until(EC.element_to_be_clickable((By.ID, "content")))
+        driver.switch_to.frame(content_frame)
 
     # get authorMainMenu form by id
-    authorMainMenu = driver.find_element_by_id("authorMainMenu")
+    twoColLayoutItems = driver.find_element(By.ID, "twoColLayoutItems")
 
     # get second element with given html tag inside the menu
-    clickable_elements = authorMainMenu.find_elements_by_tag_name("a")
+    clickable_elements = twoColLayoutItems.find_elements(By.TAG_NAME, "a")
     if len(clickable_elements) <= 1:
         return data
     data["step"] = clickable_elements[1].text
@@ -45,16 +66,16 @@ def scrap(journal_url: str, username: str, password: str) -> PaperStatus:
     clickable_elements[1].click()
 
     # wait for page to load
-    driver.implicitly_wait(10)
+    driver.implicitly_wait(WAITING_SECONDS)
 
     # get the table with the papers
-    table = driver.find_element_by_id("datatable")
-
+    # table = driver.find_element(By.ID, "datatable")
+    table = wait.until(EC.visibility_of_element_located((By.ID, "datatable")))
     # get first row of the table
-    first_row = table.find_element_by_id("row1")
+    first_row = table.find_element(By.ID, "row1")
 
     # get all row columns
-    fields = first_row.find_elements_by_tag_name("td")
+    fields = first_row.find_elements(By.TAG_NAME, "td")
 
     # get the title of the paper (3rd column)
     data["title"] = fields[TITLE_COLUMN].text

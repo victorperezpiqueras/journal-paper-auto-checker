@@ -1,3 +1,5 @@
+import json
+import logging
 import os
 import boto3
 
@@ -14,16 +16,22 @@ def handler(event=None, context=None):
     ses = boto3.client("ses")
 
     # send message to email list
-    ses.send_email(
+    emails = json.loads(os.getenv("EMAIL_ADDRESSES"))
+    result = ses.send_email(
         Source=os.getenv("SENDER_EMAIL"),
-        Destination={"BccAddresses": [os.getenv("EMAIL_ADDRESSES")]},
+        Destination={"BccAddresses": emails},
         Message={
             "Subject": {"Data": f"[{data['title']}] Status: {data['status']}"},
             "Body": {
                 "Text": {
-                    "Data": f"Your paper titled '{data['title']}' is in step '{data['step']}' with status '{data['status']}' since {data['status_date']}."
+                    "Data": f"Your paper titled: '{data['title']}' \nIs in step: '{data['step']}' \nWith status: '{data['status']}' \nSince: {data['status_date']}."
                 }
             },
         },
     )
+    logging.info(result)
     return
+
+
+if __name__ == "__main__":
+    handler()

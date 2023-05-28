@@ -1,4 +1,4 @@
-service: journal-checker
+service: journal-paper-auto-checker
 frameworkVersion: "3"
 package:
   # exclude everything except the code and necesary things:
