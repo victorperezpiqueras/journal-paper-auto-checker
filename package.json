@@ -1,0 +1,16 @@
+{
+  "name": "journal-paper-auto-checker",
+  "version": "1.0.0",
+  "description": "Script that allows to schedule daily checks of paper status by using Selenium and lambda cron jobs.",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/victorperezpiqueras/journal-paper-auto-checker.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/victorperezpiqueras/journal-paper-auto-checker/issues"
+  },
+  "homepage": "https://github.com/victorperezpiqueras/journal-paper-auto-checker#readme"
+}

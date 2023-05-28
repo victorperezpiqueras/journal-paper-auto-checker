@@ -1,0 +1,40 @@
+service: journal-checker
+frameworkVersion: "3"
+package:
+  # exclude everything except the code and necesary things:
+  exclude:
+    - ./**
+  include:
+    - ./paper-checker.py
+
+provider:
+  name: aws
+  runtime: python3.10
+  region: eu-west-1
+  environment:
+    SNS_TOPIC_ARN: !Ref SNSTopic
+    EMAIL_ADDRESS: ${file(./env.yml):ENV_VARS.EMAIL_ADDRESS}
+    PASSWORD: ${file(./env.yml):ENV_VARS.PASSWORD}
+    JOURNAL_URL: ${file(./env.yml):ENV_VARS.JOURNAL_URL}
+
+custom:
+  pythonRequirements:
+    slim: true
+    layer: true
+
+functions:
+  cron-checker:
+    handler: paper-checker.lambda_handler
+    memorySize: 128
+    events:
+      - schedule: rate(1 day)
+
+resources:
+  Resources:
+    SNSTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: ${self:service}-publish-update-topic
+        Subscription:
+          - Endpoint: ${self:provider.environment.EMAIL_ADDRESS}
+            Protocol: email
