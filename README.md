@@ -14,7 +14,8 @@ To define the journals to check, create an entry in the DynamoDB table created a
   "pK": "CONFIG",
   "timestamp": 0,
   "payload": {
-    "journal": "<JOURNAL_TYPE>",
+    "journal_type": "<JOURNAL_TYPE>",
+    "journal_url": "<journal_url>",
     "destination_addresses": ["<email1>", "..."],
     "username": "<your username>",
     "password": "<your password>"

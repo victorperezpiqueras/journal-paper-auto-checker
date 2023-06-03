@@ -22,52 +22,77 @@ def handler(event=None, context=None):
     )
 
     # querytable for pK equal CONFIG:
-    journal_configs_query_response = journal_dynamodb_table.query(
+    journal_configs = journal_dynamodb_table.query(
         KeyConditionExpression="pK = :pK",
         ExpressionAttributeValues={":pK": "CONFIG"},
-    )
-    # parse to list:
-    journal_configs = journal_configs_query_response["Items"]
+    )["Items"]
 
     # for each journal config, scrap and send email:
     for journal_config in journal_configs:
-        journal_type = journal_config["payload"]["journal"]
+        journal_type = journal_config["payload"]["journal_type"]
+        journal_url = journal_config["payload"]["journal_url"]
         username = journal_config["payload"]["username"]
         password = journal_config["payload"]["password"]
         destination_addresses = journal_config["payload"]["destination_addresses"]
-        journal = journal_factory(journal_type)
+        if not destination_addresses:
+            logger.info(
+                f"No destination addresses found for {journal_type}. Skipping it"
+            )
+            continue
+
+        journal = journal_factory(journal_type, journal_url)
+
         try:
-            # paper_status = scrap(journal_url, username, password)
             logger.info(f"Scraping {journal_type}")
             paper_status = journal.scrap(username, password)
         except Exception as e:
             logger.error(e)
             continue
 
+        current_ts = int(time.time() * 1000)
+        # check status filter less than timestamp sk if exists and check if it has same data in payload:
+        last_journal_status = journal_dynamodb_table.query(
+            KeyConditionExpression="pK = :pK AND #timestamp < :timestamp",
+            ExpressionAttributeValues={
+                ":pK": f"STATUS#{journal_type}",
+                ":timestamp": current_ts,
+            },
+            ExpressionAttributeNames={"#timestamp": "timestamp"},
+            ScanIndexForward=False,
+            Limit=1,
+        )["Items"]
+
+        if (
+            len(last_journal_status) > 0
+            and last_journal_status[0]["payload"] == paper_status.__dict__
+        ):
+            logger.info(f"Status for {journal_type} has not changed")
+            continue
+
         # store paper status in dynamodb
+        logger.info(f"New {journal_type} status found. Storing it in dynamodb")
         journal_dynamodb_table.put_item(
             Item={
                 "pK": f"STATUS#{journal_type}",
-                "timestamp": int(time.time() * 1000),
+                "timestamp": current_ts,
                 "payload": paper_status.__dict__,
             }
         )
 
         # build email content
         email_formatter = EmailFormatter(paper_status)
-        # destination_addresses = json.loads(os.getenv("EMAIL_ADDRESSES").strip("'"))
         raw_message = email_formatter.get_raw_email_message(
             os.getenv("SENDER_EMAIL"), destination_addresses, bcc=True
         )
 
         ses = boto3.client("ses")
         try:
+            logging.info(f"Sending email to {destination_addresses}")
             ses.send_raw_email(
                 Source=str(os.getenv("SENDER_EMAIL")),
                 Destinations=destination_addresses,
                 RawMessage={"Data": raw_message},
             )
-            logging.info(f"Email sent to {destination_addresses}")
         except Exception as e:
             logging.error(e)
             continue

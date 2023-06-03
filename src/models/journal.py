@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-import logging
 from models.paper_status import PaperStatus
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
@@ -8,6 +7,9 @@ from web_driver_factory import web_driver_factory
 
 class Journal(ABC):
     url: str
+
+    def __init__(self, url: str):
+        self.url = url
 
     @abstractmethod
     def scrap(self, username: str, password: str) -> PaperStatus:
@@ -24,20 +26,15 @@ class Journal(ABC):
 
 
 class EditorialManagerJournal(Journal):
-    url: str = "https://www.editorialmanager.com/mtap/default2.aspx"
-
     def scrap(self, username: str, password: str) -> PaperStatus:
-        logger = logging.getLogger()
         TITLE_COLUMN = 2
         STATUS_DATE_COLUMN = 4
         STATUS_COLUMN = 5
         WAITING_SECONDS = 5
-
         paper_status = self.get_default_paper_status()
 
         driver, wait = web_driver_factory(WAITING_SECONDS)
 
-        logger.info(f"Starting web driver")
         driver.get(self.url)
 
         # switch to content iframe
@@ -59,11 +56,9 @@ class EditorialManagerJournal(Journal):
         # click login button by name
         login_button = driver.find_element(By.NAME, "authorLogin")
         login_button.click()
-        logger.info("Logging in")
 
         # wait for page to load
         driver.implicitly_wait(WAITING_SECONDS)
-        # switch to content iframe
 
         for _ in range(2):
             content_frame = wait.until(
@@ -84,7 +79,6 @@ class EditorialManagerJournal(Journal):
 
         # click on the second element
         clickable_elements[1].click()
-        logging.info("Checking paper status")
 
         # get the table with the papers
         table = wait.until(EC.visibility_of_element_located((By.ID, "datatable")))
@@ -103,7 +97,6 @@ class EditorialManagerJournal(Journal):
 
         # get status date (5th column)
         paper_status.status_date = fields[STATUS_DATE_COLUMN].text
-        logging.info("Paper status found")
 
         # close driver
         driver.close()
@@ -111,8 +104,8 @@ class EditorialManagerJournal(Journal):
         return paper_status
 
 
-def journal_factory(journal_type: str) -> Journal:
+def journal_factory(journal_type: str, journal_url: str) -> Journal:
     if journal_type == "EDITORIAL_MANAGER":
-        return EditorialManagerJournal()
+        return EditorialManagerJournal(journal_url)
     else:
         raise Exception("Journal type not supported")
