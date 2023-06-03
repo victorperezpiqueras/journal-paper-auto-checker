@@ -1,5 +1,7 @@
 service: journal-paper-auto-checker
 
+frameworkVersion: "3"
+
 provider:
   name: aws
   stage: ${opt:stage, 'prod'}
@@ -36,7 +38,7 @@ custom:
   journal-statuses-configs-dynamodb-table: ${self:service}-${self:provider.stage}-journal-statuses-configs
 
 functions:
-  demo:
+  cron-checker:
     timeout: 300
     memorySize: 2048
     image:
