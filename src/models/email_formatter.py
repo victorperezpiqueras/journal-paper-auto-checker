@@ -1,6 +1,6 @@
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from paper_status import PaperStatus
+from models.paper_status import PaperStatus
 
 
 class EmailFormatter:
@@ -16,7 +16,7 @@ class EmailFormatter:
             f"Is in step: <b>{self.status.step}</b><br>"
             f"Status: <b>{self.status.status}</b><br>"
             f"Status Date: <b>{self.status.status_date}</b><br>"
-            f"Link to paper: <a href='{self.status.link}'>{self.status.link}</a><br>"
+            f"Link to journal: <a href='{self.status.link}'>{self.status.link}</a><br>"
         )
 
     def get_raw_email_message(

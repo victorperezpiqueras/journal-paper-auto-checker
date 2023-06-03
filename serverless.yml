@@ -5,11 +5,12 @@ provider:
   stage: ${opt:stage, 'prod'}
   region: ${env:AWS_REGION, 'eu-west-1'}
   environment:
-    JOURNAL_URL: ${file(./.env.yml):JOURNAL_URL}
-    USERNAME: ${file(./.env.yml):USERNAME}
-    PASSWORD: ${file(./.env.yml):PASSWORD}
-    EMAIL_ADDRESSES: ${file(./.env.yml):EMAIL_ADDRESSES}
+    #JOURNAL_URL: ${file(./.env.yml):JOURNAL_URL}
+    #USERNAME: ${file(./.env.yml):USERNAME}
+    #PASSWORD: ${file(./.env.yml):PASSWORD}
+    #EMAIL_ADDRESSES: ${file(./.env.yml):EMAIL_ADDRESSES}
     SENDER_EMAIL: ${file(./.env.yml):SENDER_EMAIL}
+    JOURNAL_STATUSES_CONFIGS_DYNAMODB_TABLE: ${self:custom.journal-statuses-configs-dynamodb-table}
   iam:
     role:
       statements:
@@ -18,12 +19,21 @@ provider:
             - "ses:SendRawEmail"
           Resource:
             - "*"
+        - Effect: "Allow"
+          Action:
+            - "dynamodb:PutItem"
+            - "dynamodb:Query"
+          Resource:
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.journal-statuses-configs-dynamodb-table}"
 
   ecr:
     images:
       img:
         path: ./
         platform: linux/amd64
+
+custom:
+  journal-statuses-configs-dynamodb-table: ${self:service}-${self:provider.stage}-journal-statuses-configs
 
 functions:
   demo:
@@ -33,3 +43,23 @@ functions:
       name: img
     events: # Run every day at 8am
       - schedule: cron(0 8 * * ? *)
+
+resources:
+  Resources:
+    JournalPaperAutoCheckerTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.journal-statuses-configs-dynamodb-table}
+        AttributeDefinitions:
+          - AttributeName: pK
+            AttributeType: S
+          - AttributeName: timestamp
+            AttributeType: N
+        KeySchema:
+          - AttributeName: pK
+            KeyType: HASH
+          - AttributeName: timestamp
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
