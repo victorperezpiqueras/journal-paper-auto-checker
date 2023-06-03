@@ -3,14 +3,26 @@ import logging
 import os
 import boto3
 
-from src.status_scraper import scrap
+from status_scraper import scrap
+import logging
+
+logging.basicConfig(level=logging.INFO)
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 
 def handler(event=None, context=None):
+    logger.info(str(os.getenv("SENDER_EMAIL")))
     journal_url = os.getenv("JOURNAL_URL")
     username = os.getenv("USERNAME")
     password = os.getenv("PASSWORD")
-    data = scrap(journal_url, username, password)
+
+    try:
+        data = scrap(journal_url, username, password)
+    except Exception as e:
+        logger.error(e)
+        return
 
     # create ses client
     ses = boto3.client("ses")
@@ -18,9 +30,9 @@ def handler(event=None, context=None):
     # send message to email list
     # remove trailing ':
 
-    emails = json.loads(os.getenv("EMAIL_ADDRESSES").strip("\'"))
+    emails = json.loads(os.getenv("EMAIL_ADDRESSES").strip("'"))
     result = ses.send_email(
-        Source=os.getenv("SENDER_EMAIL"),
+        Source=str(os.getenv("SENDER_EMAIL")),
         Destination={"BccAddresses": emails},
         Message={
             "Subject": {"Data": f"[{data.title}] Status: {data.status}"},
@@ -31,7 +43,7 @@ def handler(event=None, context=None):
             },
         },
     )
-    logging.info(result)
+    print(result)
     return
 
 

@@ -162,3 +162,6 @@ cython_debug/
 setenv.bat
 
 .vscode
+package-lock.json
+.serverless
+node_modules

@@ -4,11 +4,13 @@ from tempfile import mkdtemp
 
 from selenium.webdriver.support.wait import WebDriverWait
 
-from src.paper_status import PaperStatus
+from paper_status import PaperStatus
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
+
+logger = logging.getLogger()
 
 
 def scrap(journal_url: str, username: str, password: str) -> PaperStatus:
@@ -16,45 +18,38 @@ def scrap(journal_url: str, username: str, password: str) -> PaperStatus:
     STATUS_DATE_COLUMN = 4
     STATUS_COLUMN = 5
 
-    # dict with data to print
+    # dict with data to logger.info
     data: PaperStatus = PaperStatus(
         title="No paper title found",
         step="No paper step found",
         status="No paper found",
         status_date="No paper status date found",
     )
-    print(f'starting{bool(os.getenv("DEBUG_LOCAL"))}')
+    logger.info(f'starting{bool(os.getenv("DEBUG_LOCAL"))}')
     if bool(os.getenv("DEBUG_LOCAL")):
         driver = webdriver.Chrome()
     else:
-        options = Options()
-        options.binary_location = '/opt/headless-chromium'
-        options.add_argument('--headless')
-        options.add_argument('--no-sandbox')
-        options.add_argument('--single-process')
-        options.add_argument('--disable-dev-shm-usage')
-        options.add_argument("--window-size=1920,1080")
-        options.add_argument("--disable-extensions")
-        options.add_argument("--proxy-server='direct://'")
-        options.add_argument("--proxy-bypass-list=*")
-        options.add_argument("--start-maximized")
-        options.add_argument('--headless')
-        options.add_argument('--disable-gpu')
-        options.add_argument('--disable-dev-shm-usage')
-        options.add_argument('--no-sandbox')
-        options.add_argument('--ignore-certificate-errors')
-        options.add_argument("--remote-debugging-port=9222")
+        options = webdriver.ChromeOptions()
+        options.binary_location = "/opt/chrome/chrome"
+        options.add_argument("--headless")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-gpu")
+        options.add_argument("--window-size=1280x1696")
+        options.add_argument("--single-process")
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--disable-dev-tools")
         options.add_argument("--no-zygote")
         options.add_argument(f"--user-data-dir={mkdtemp()}")
         options.add_argument(f"--data-path={mkdtemp()}")
         options.add_argument(f"--disk-cache-dir={mkdtemp()}")
-        driver = webdriver.Chrome('/opt/chromedriver', chrome_options=options)
+        options.add_argument("--remote-debugging-port=9222")
+        driver = webdriver.Chrome("/opt/chromedriver", options=options)
 
-    WAITING_SECONDS = 2
+    WAITING_SECONDS = 5
     wait = WebDriverWait(driver, WAITING_SECONDS)
-    print("start")
+    logger.info("start")
     driver.get(journal_url)
-    print("started")
+    logger.info("started")
     # switch to content iframe
     content_frame = wait.until(EC.visibility_of_element_located((By.ID, "content")))
     driver.switch_to.frame(content_frame)
@@ -72,19 +67,22 @@ def scrap(journal_url: str, username: str, password: str) -> PaperStatus:
     # click login button by name
     login_button = driver.find_element(By.NAME, "authorLogin")
     login_button.click()
-    logging.info("Logging in")
+    logger.info("Logging in")
 
     # wait for page to load
     driver.implicitly_wait(WAITING_SECONDS)
 
     # switch to content iframe
 
-    # for i in range(2):
-    content_frame = wait.until(EC.element_to_be_clickable((By.ID, "content")))
-    driver.switch_to.frame(content_frame)
-
+    for i in range(2):
+        content_frame = wait.until(EC.visibility_of_element_located((By.ID, "content")))
+        driver.switch_to.frame(content_frame)
+        logger.info(content_frame)
+    # logger.info(content_frame.get_attribute("innerHTML"))
     # get authorMainMenu form by id
-    twoColLayoutItems = driver.find_element(By.ID, "twoColLayoutItems")
+    twoColLayoutItems = wait.until(
+        EC.visibility_of_element_located((By.ID, "twoColLayoutItems"))
+    )
 
     # get second element with given html tag inside the menu
     clickable_elements = twoColLayoutItems.find_elements(By.TAG_NAME, "a")
@@ -97,7 +95,7 @@ def scrap(journal_url: str, username: str, password: str) -> PaperStatus:
     logging.info("Checking paper status")
 
     # wait for page to load
-    driver.implicitly_wait(WAITING_SECONDS)
+    # driver.implicitly_wait(WAITING_SECONDS)
 
     # get the table with the papers
     # table = driver.find_element(By.ID, "datatable")

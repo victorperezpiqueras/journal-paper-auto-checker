@@ -1,30 +1,34 @@
-service: journal-paper-auto-checker
-frameworkVersion: "3"
-package:
-  # exclude everything except the code and necesary things:
-  exclude:
-    - ./**
-  include:
-    - ./src/**
+service: editorial-manager-paper-auto-checker
 
 provider:
   name: aws
-  runtime: python3.10
-  region: eu-west-1
+  stage: ${opt:stage, 'prod'}
+  region: ${env:AWS_REGION, 'eu-west-1'}
   environment:
-    JOURNAL_URL: ${file(./env.yml):ENV_VARS.JOURNAL_URL}
-    USERNAME: ${file(./env.yml):ENV_VARS.USERNAME}
-    PASSWORD: ${file(./env.yml):ENV_VARS.PASSWORD}
-    EMAIL_ADDRESSES: ${file(./env.yml):ENV_VARS.EMAIL_ADDRESSES}
+    JOURNAL_URL: ${file(./.env.yml):JOURNAL_URL}
+    USERNAME: ${file(./.env.yml):USERNAME}
+    PASSWORD: ${file(./.env.yml):PASSWORD}
+    EMAIL_ADDRESSES: ${file(./.env.yml):EMAIL_ADDRESSES}
+    SENDER_EMAIL: ${file(./.env.yml):SENDER_EMAIL}
+  iam:
+    role:
+      statements:
+        - Effect: "Allow"
+          Action:
+            - "ses:SendEmail"
+          Resource:
+            - "*"
 
-custom:
-  pythonRequirements:
-    slim: true
-    layer: true
+  ecr:
+    images:
+      img:
+        path: ./
+        platform: linux/amd64
 
 functions:
-  cron-checker:
-    handler: src/cron_checker.handler
-    memorySize: 128
-    events:
-      - schedule: rate(1 day)
+  demo:
+    timeout: 60
+    # If you experience any errors such as Chrome crashing or not being available you might need to increase the storage available to your Lambda Function. See #102
+    memorySize: 2048
+    image:
+      name: img
