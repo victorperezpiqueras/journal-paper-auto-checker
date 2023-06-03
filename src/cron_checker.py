@@ -2,38 +2,40 @@ import json
 import logging
 import os
 import boto3
+from email_formatter import EmailFormatter
+from status_scraper import scrap
+import logging
 
-from src.status_scraper import scrap
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 
 def handler(event=None, context=None):
     journal_url = os.getenv("JOURNAL_URL")
     username = os.getenv("USERNAME")
     password = os.getenv("PASSWORD")
-    data = scrap(journal_url, username, password)
 
-    # create ses client
+    try:
+        paper_status = scrap(journal_url, username, password)
+    except Exception as e:
+        logger.error(e)
+        return
+
+    emails = json.loads(os.getenv("EMAIL_ADDRESSES").strip("'"))
+    email_formatter = EmailFormatter(paper_status)
+
     ses = boto3.client("ses")
-
-    # send message to email list
-    # remove trailing ':
-
-    emails = json.loads(os.getenv("EMAIL_ADDRESSES").strip("\'"))
     result = ses.send_email(
-        Source=os.getenv("SENDER_EMAIL"),
+        Source=str(os.getenv("SENDER_EMAIL")),
         Destination={"BccAddresses": emails},
         Message={
-            "Subject": {"Data": f"[{data.title}] Status: {data.status}"},
+            "Subject": {"Data": email_formatter.get_subject()},
             "Body": {
                 "Text": {
-                    "Data": f"Your paper titled: '{data.title}' \nIs in step: '{data.step}' \nWith status: '{data.status}' \nSince: {data.status_date}."
+                    "Data": email_formatter.get_body(),
                 }
             },
         },
     )
-    logging.info(result)
+    logging.info(f"Email sent to {emails}")
     return
-
-
-if __name__ == "__main__":
-    handler()

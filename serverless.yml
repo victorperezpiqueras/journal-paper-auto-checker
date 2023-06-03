@@ -1,4 +1,4 @@
-service: editorial-manager-paper-auto-checker
+service: journal-paper-auto-checker
 
 provider:
   name: aws

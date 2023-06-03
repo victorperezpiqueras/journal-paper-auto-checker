@@ -13,7 +13,5 @@
     "url": "https://github.com/victorperezpiqueras/journal-paper-auto-checker/issues"
   },
   "homepage": "https://github.com/victorperezpiqueras/journal-paper-auto-checker#readme",
-  "devDependencies": {
-    "serverless-python-requirements": "^6.0.0"
-  }
+  "devDependencies": {}
 }

@@ -13,5 +13,5 @@ RUN yum install atk cups-libs gtk3 libXcomposite alsa-lib \
 RUN pip install selenium
 COPY --from=build /opt/chrome-linux /opt/chrome
 COPY --from=build /opt/chromedriver /opt/
-COPY status_scraper.py paper_status.py cron_checker.py ./
+COPY src ./
 CMD [ "cron_checker.handler" ]
