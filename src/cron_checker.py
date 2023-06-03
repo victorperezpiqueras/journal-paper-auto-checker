@@ -1,3 +1,5 @@
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 import json
 import logging
 import os
@@ -21,21 +23,18 @@ def handler(event=None, context=None):
         logger.error(e)
         return
 
-    emails = json.loads(os.getenv("EMAIL_ADDRESSES").strip("'"))
+    # build email content
     email_formatter = EmailFormatter(paper_status)
+    destination_addresses = json.loads(os.getenv("EMAIL_ADDRESSES").strip("'"))
+    raw_message = email_formatter.get_raw_email_message(
+        os.getenv("SENDER_EMAIL"), destination_addresses, bcc=True
+    )
 
     ses = boto3.client("ses")
-    result = ses.send_email(
+    result = ses.send_raw_email(
         Source=str(os.getenv("SENDER_EMAIL")),
-        Destination={"BccAddresses": emails},
-        Message={
-            "Subject": {"Data": email_formatter.get_subject()},
-            "Body": {
-                "Text": {
-                    "Data": email_formatter.get_body(),
-                }
-            },
-        },
+        Destinations=destination_addresses,
+        RawMessage={"Data": raw_message},
     )
-    logging.info(f"Email sent to {emails}")
+    logging.info(f"Email sent to {destination_addresses}")
     return

@@ -7,3 +7,4 @@ class PaperStatus:
     step: str
     status: str
     status_date: str
+    link: str

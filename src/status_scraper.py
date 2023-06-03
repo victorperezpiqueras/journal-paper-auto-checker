@@ -23,6 +23,7 @@ def scrap(journal_url: str, username: str, password: str) -> PaperStatus:
         step="No paper step found",
         status="No paper found",
         status_date="No paper status date found",
+        link=journal_url,
     )
 
     driver, wait = web_driver_factory(WAITING_SECONDS)
