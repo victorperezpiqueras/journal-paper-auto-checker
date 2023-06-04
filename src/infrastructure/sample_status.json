@@ -1,0 +1,11 @@
+{
+  "pK": "STATUS#<JOURNAL_TYPE>",
+  "timestamp": 1685899880559,
+  "payload": {
+    "link": "<JOURNAL_LINK>",
+    "status": "Under Review",
+    "status_date": "2023-05-01 11:51:56",
+    "step": "Submissions Being Processed",
+    "title": "<JOURNAL_TITLE>"
+  }
+}

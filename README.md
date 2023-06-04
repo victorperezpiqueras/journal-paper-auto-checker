@@ -14,23 +14,13 @@ The Dockerfile is built thanks to this [repo](https://github.com/umihico/docker-
 - chromedriver 114.0.5735.90
 - selenium 4.9.1
 
-To define the journals to check, create an entry in the DynamoDB table created as follows:
+To define a journal to check, create an entry in the created DynamoDB table with the data structure defined in `src/infrastructure/sample_config.json`.
 
-```json
-{
-  "pK": "CONFIG",
-  "timestamp": 0,
-  "payload": {
-    "journal_type": "<JOURNAL_TYPE>",
-    "journal_url": "<journal_url>",
-    "destination_addresses": ["<email1>", "..."],
-    "username": "<your username>",
-    "password": "<your password>"
-  }
-}
-```
+Journal scrapers are defined in `/src/domain/journal.py`. The `destination_addresses` field is a list of email addresses to send the report to. The `username` and `password` fields are the credentials to log in to the journal website.
 
-Journal scrapers are defined in `/src/models/journal.py`. The `destination_addresses` field is a list of email addresses to send the report to. The `username` and `password` fields are the credentials to log in to the journal website.
+The entry-point of the cron lambda function is `/src/application/cron_checker.py`.
+
+The email format is defined in `/src/domain/email_formatter.py`.
 
 # How to set up
 

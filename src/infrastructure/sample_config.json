@@ -1,0 +1,11 @@
+{
+  "pK": "CONFIG",
+  "timestamp": 0,
+  "payload": {
+    "journal_type": "<JOURNAL_TYPE>",
+    "journal_url": "<journal_url>",
+    "destination_addresses": ["<email1>", "..."],
+    "username": "<your username>",
+    "password": "<your password>"
+  }
+}
