@@ -7,10 +7,6 @@ provider:
   stage: ${opt:stage, 'prod'}
   region: ${env:AWS_REGION, 'eu-west-1'}
   environment:
-    #JOURNAL_URL: ${file(./.env.yml):JOURNAL_URL}
-    #USERNAME: ${file(./.env.yml):USERNAME}
-    #PASSWORD: ${file(./.env.yml):PASSWORD}
-    #EMAIL_ADDRESSES: ${file(./.env.yml):EMAIL_ADDRESSES}
     SENDER_EMAIL: ${file(./.env.yml):SENDER_EMAIL}
     JOURNAL_STATUSES_CONFIGS_DYNAMODB_TABLE: ${self:custom.journal-statuses-configs-dynamodb-table}
   iam:
@@ -48,7 +44,7 @@ functions:
 
 resources:
   Resources:
-    JournalPaperAutoCheckerTable:
+    JournalStatusesConfigsTable: # stores both journal statuses and configs to avoid having to create two tables
       Type: AWS::DynamoDB::Table
       Properties:
         TableName: ${self:custom.journal-statuses-configs-dynamodb-table}

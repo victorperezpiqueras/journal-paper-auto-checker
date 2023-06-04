@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
-from models.paper_status import PaperStatus
+from domain.paper_status import PaperStatus
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
-from web_driver_factory import web_driver_factory
+from shared.web_driver_factory import web_driver_factory
 
 
 class Journal(ABC):

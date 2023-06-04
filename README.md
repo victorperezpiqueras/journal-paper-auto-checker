@@ -31,3 +31,23 @@ To define the journals to check, create an entry in the DynamoDB table created a
 ```
 
 Journal scrapers are defined in `/src/models/journal.py`. The `destination_addresses` field is a list of email addresses to send the report to. The `username` and `password` fields are the credentials to log in to the journal website.
+
+# How to set up
+
+Install the serverless framework:
+
+```bash
+npm install -g serverless
+```
+
+Install the dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+Setup AWS credentials, launch docker and deploy:
+
+```bash
+serverless deploy
+```

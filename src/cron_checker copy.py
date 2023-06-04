@@ -2,8 +2,8 @@ import logging
 import os
 import time
 import boto3
-from models.email_formatter import EmailFormatter
-from models.journal import journal_factory
+from domain.email_formatter import EmailFormatter
+from domain.journal import journal_factory
 import logging
 
 logger = logging.getLogger()
@@ -11,10 +11,6 @@ logger.setLevel(logging.INFO)
 
 
 def handler(event=None, context=None):
-    # journal_url = os.getenv("JOURNAL_URL")
-    # username = os.getenv("USERNAME")
-    # password = os.getenv("PASSWORD")
-
     # get dynamodb from os env:
     journal_dynamodb_table_name = os.getenv("JOURNAL_STATUSES_CONFIGS_DYNAMODB_TABLE")
     journal_dynamodb_table = boto3.resource("dynamodb").Table(
@@ -69,8 +65,7 @@ def handler(event=None, context=None):
             logger.info(f"Status for {journal_type} has not changed")
             continue
 
-        # store paper status in dynamodb
-        logger.info(f"New {journal_type} status found. Storing it in dynamodb")
+        logger.info(f"New {journal_type} status found. Storing it")
         journal_dynamodb_table.put_item(
             Item={
                 "pK": f"STATUS#{journal_type}",

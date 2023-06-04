@@ -14,4 +14,4 @@ RUN pip install selenium
 COPY --from=build /opt/chrome-linux /opt/chrome
 COPY --from=build /opt/chromedriver /opt/
 COPY src ./
-CMD [ "cron_checker.handler" ]
+CMD [ "application.cron_checker.handler" ]

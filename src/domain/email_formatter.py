@@ -1,6 +1,6 @@
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from models.paper_status import PaperStatus
+from domain.paper_status import PaperStatus
 
 
 class EmailFormatter:
